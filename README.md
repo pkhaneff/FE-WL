@@ -16,6 +16,19 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## Backend API config
+
+This app expects a backend base URL via the Expo public env var `EXPO_PUBLIC_API_URL`.
+
+- Set it to your BE-WL server root (without `/api/v1` is OK; the app will append it).
+- Example:
+
+```bash
+# Windows PowerShell
+$env:EXPO_PUBLIC_API_URL = "http://localhost:8000"
+npx expo start
+```
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

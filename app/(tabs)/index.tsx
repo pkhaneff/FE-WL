@@ -1,98 +1,79 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { JoinRoomModal } from '../../src/features/rooms/components/JoinRoomModal';
+import { RoomCard } from '../../src/features/rooms/components/RoomCard';
+import { roomService } from '../../src/features/rooms/services';
+import { Room } from '../../src/types';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const router = useRouter();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const data = await roomService.getRooms();
+      setRooms(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  return (
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="p-6 pb-2">
+        <Text className="text-3xl font-bold text-gray-800">KhaNu</Text>
+        <Text className="text-gray-500 mt-1">Ghi lại hành trành của Khang và Nu</Text>
+      </View>
+
+      <FlatList
+        data={rooms}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <RoomCard room={item} />}
+        contentContainerStyle={{ padding: 24 }}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchRooms} />
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View className="items-center py-10">
+              <Text className="text-gray-500">You haven't joined any rooms yet.</Text>
+            </View>
+          ) : null
+        }
+      />
+
+      <View className="p-6 bg-white border-t border-gray-100 flex-row gap-4">
+        <TouchableOpacity
+          className="flex-1 bg-blue-100 p-4 rounded-xl items-center"
+          onPress={() => setShowJoinModal(true)}
+        >
+          <Text className="text-blue-700 font-semibold text-base py-1">Join Room</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="flex-1 bg-[#e56f09] p-4 rounded-xl items-center shadow-sm"
+          onPress={() => router.push('/rooms/create')}
+        >
+          <Text className="text-white font-semibold text-base py-1">Create Room</Text>
+        </TouchableOpacity>
+      </View>
+
+      <JoinRoomModal
+        visible={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onSuccess={fetchRooms}
+      />
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
