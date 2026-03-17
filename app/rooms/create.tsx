@@ -6,14 +6,15 @@ import { useRouter, Stack } from 'expo-router';
 
 export default function CreateRoomScreen() {
   const [name, setName] = useState('');
+  const [passRoom, setPassRoom] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !passRoom.trim()) return;
     setLoading(true);
     try {
-      const room = await roomService.createRoom(name);
+      const room = await roomService.createRoom(name, passRoom);
       router.replace(`/rooms/${room.id}`);
     } catch (e) {
       console.error(e);
@@ -37,10 +38,21 @@ export default function CreateRoomScreen() {
           autoFocus
         />
 
+        <Text className="text-lg font-bold text-gray-800 mb-2">Room Pass</Text>
+        <Text className="text-sm text-gray-500 mb-4">Share this pass with your partner to join.</Text>
+
+        <TextInput
+          className="bg-gray-100 p-4 rounded-xl text-base border border-gray-200 mb-6"
+          placeholder="Enter room pass"
+          secureTextEntry
+          value={passRoom}
+          onChangeText={setPassRoom}
+        />
+
         <TouchableOpacity 
           className="bg-blue-600 p-4 rounded-xl items-center shadow-sm"
           onPress={handleCreate}
-          disabled={loading || !name.trim()}
+          disabled={loading || !name.trim() || !passRoom.trim()}
         >
           {loading ? (
             <ActivityIndicator color="white" />

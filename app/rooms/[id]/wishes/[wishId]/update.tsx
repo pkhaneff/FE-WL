@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { wishService } from '../../../../../src/features/wishes/services';
 import { WishType } from '../../../../../src/types';
+import { useWishesStore } from '../../../../../src/store/wishes';
 
 export default function UpdateWishScreen() {
   const { id, wishId } = useLocalSearchParams<{ id: string, wishId: string }>();
@@ -13,15 +14,16 @@ export default function UpdateWishScreen() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const updateWishContent = useWishesStore((state) => state.updateWishContent);
 
   useEffect(() => {
     loadWish();
   }, [wishId]);
 
   const loadWish = async () => {
-    if (!wishId) return;
+    if (!wishId || !id) return;
     try {
-      const wish = await wishService.getWishById(wishId);
+      const wish = await wishService.getWishById(id, wishId);
       setType(wish.type);
       setContent(wish.content);
     } catch (e) {
@@ -33,10 +35,11 @@ export default function UpdateWishScreen() {
   };
 
   const handleUpdate = async () => {
-    if (!content.trim() || !wishId) return;
+    if (!content.trim() || !wishId || !id) return;
     setSaving(true);
     try {
-      await wishService.updateWishContent(wishId, type, content);
+      await wishService.updateWishContent(id, wishId, type, content);
+      updateWishContent(id, wishId, type, content);
       router.back();
     } catch (e) {
       console.error(e);

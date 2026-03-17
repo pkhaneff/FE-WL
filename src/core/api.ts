@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAppStore } from '../store';
 
-const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 const API_URL = RAW_API_URL.replace(/\/+$/, '');
 const API_V1_URL = API_URL.endsWith('/api/v1') ? API_URL : `${API_URL}/api/v1`;
 
@@ -24,6 +24,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.log('[AXIOS LỖI CHI TIẾT]', error.message, error.config?.url);
     const originalRequest = error.config;
     if (error.response?.status !== 401 || !originalRequest) {
       return Promise.reject(error);

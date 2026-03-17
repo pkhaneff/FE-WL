@@ -1,5 +1,5 @@
 export type WishType = 'gift' | 'habit' | 'bad_habit' | 'question';
-export type WishStatus = 'active' | 'confirmed' | 'deleted';
+export type WishStatus = 'pending' | 'requested' | 'rejected' | 'confirmed' | 'deleted';
 
 export interface User {
   id: string;
@@ -12,7 +12,7 @@ export interface User {
 export interface Room {
   id: string;
   name: string;
-  code: string; // Used to join room
+  code: string; // Join code
   ownerId: string;
   partnerId?: string;
   createdAt: string;

@@ -37,12 +37,13 @@ export const AuthForm = ({ onSuccess }: Props) => {
 
   return (
     <View className="flex-1 justify-center p-6 bg-white gap-4 w-full max-w-sm mx-auto">
-      <Text className="text-3xl font-bold text-center text-gray-800 mb-6">
+      <Text className="text-3xl font-bold text-center text-[#e56f09] mb-6">
         {isLogin ? 'Welcome Back' : 'Create Account'}
       </Text>
 
       {!isLogin && (
         <>
+          <Text className="text-sm font-medium text-gray-700">Username</Text>
           <TextInput
             className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200"
             placeholder="Username (letters, numbers, underscore)"
@@ -50,6 +51,7 @@ export const AuthForm = ({ onSuccess }: Props) => {
             value={username}
             onChangeText={setUsername}
           />
+          <Text className="text-sm font-medium text-gray-700">Full name</Text>
           <TextInput
             className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200"
             placeholder="Full name (optional)"
@@ -58,16 +60,18 @@ export const AuthForm = ({ onSuccess }: Props) => {
           />
         </>
       )}
+      <Text className="text-sm font-medium text-gray-700">Email</Text>
       <TextInput
-        className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200"
+        className="bg-gray-100 p-4 rounded-xl text-base border border-gray-200"
         placeholder="Email"
         keyboardType="email-address"
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
       />
+      <Text className="text-sm font-medium text-gray-700">Password</Text>
       <TextInput
-        className="bg-gray-100 p-4 rounded-xl text-base mb-4 border border-gray-200"
+        className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200"
         placeholder="Password"
         secureTextEntry
         value={password}
@@ -75,7 +79,7 @@ export const AuthForm = ({ onSuccess }: Props) => {
       />
 
       <TouchableOpacity 
-        className="bg-blue-600 p-4 rounded-xl items-center shadow-sm"
+        className="bg-[#e56f09] p-4 rounded-xl items-center shadow-sm"
         onPress={handleSubmit}
         disabled={loading}
       >

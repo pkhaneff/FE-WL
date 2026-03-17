@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { wishService } from '../../../../src/features/wishes/services';
 import { WishType } from '../../../../src/types';
+import { useWishesStore } from '../../../../src/store/wishes';
 
 export default function CreateWishScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -12,12 +13,14 @@ export default function CreateWishScreen() {
   const [type, setType] = useState<WishType>('gift');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const upsertWish = useWishesStore((state) => state.upsertWish);
 
   const handleCreate = async () => {
     if (!content.trim() || !id) return;
     setLoading(true);
     try {
-      await wishService.createWish(id, type, content);
+      const created = await wishService.createWish(id, type, content);
+      upsertWish(id, created);
       router.back();
     } catch (e) {
       console.error(e);

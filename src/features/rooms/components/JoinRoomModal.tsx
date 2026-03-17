@@ -9,17 +9,19 @@ interface Props {
 }
 
 export const JoinRoomModal = ({ visible, onClose, onSuccess }: Props) => {
-  const [code, setCode] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [passRoom, setPassRoom] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleJoin = async () => {
-    if (!code.trim()) return;
+    if (!joinCode.trim() || !passRoom.trim()) return;
     setLoading(true);
     setError('');
     try {
-      await roomService.joinRoom(code.toUpperCase());
-      setCode('');
+      await roomService.joinRoom(joinCode.toUpperCase(), passRoom);
+      setJoinCode('');
+      setPassRoom('');
       onSuccess();
       onClose();
     } catch (e: any) {
@@ -34,15 +36,22 @@ export const JoinRoomModal = ({ visible, onClose, onSuccess }: Props) => {
       <View className="flex-1 bg-black/50 justify-center items-center p-6">
         <View className="bg-white p-6 rounded-2xl w-full max-w-sm">
           <Text className="text-xl font-bold text-gray-800 mb-2">Join a Room</Text>
-          <Text className="text-gray-500 mb-6">Enter the room code shared by your partner.</Text>
+          <Text className="text-gray-500 mb-6">Enter the room code and pass shared by your partner.</Text>
           
           <TextInput
             className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200 text-center uppercase"
-            placeholder="e.g. HOME99"
-            value={code}
-            onChangeText={setCode}
+            placeholder="e.g. HOME99A"
+            value={joinCode}
+            onChangeText={setJoinCode}
             autoCapitalize="characters"
-            maxLength={6}
+            maxLength={7}
+          />
+          <TextInput
+            className="bg-gray-100 p-4 rounded-xl text-base mb-2 border border-gray-200"
+            placeholder="Room pass"
+            secureTextEntry
+            value={passRoom}
+            onChangeText={setPassRoom}
           />
 
           {error ? <Text className="text-red-500 text-sm mb-4 text-center">{error}</Text> : null}

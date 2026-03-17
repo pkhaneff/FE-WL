@@ -1,32 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack } from 'expo-router';
-import { Wish } from '../../../src/types';
 import { wishService } from '../../../src/features/wishes/services';
 import { WishItem } from '../../../src/features/wishes/components/WishItem';
+import { useWishesStore } from '../../../src/store/wishes';
+import { Wish } from '../../../src/types';
+
+const EMPTY_WISHES: Wish[] = [];
 
 export default function WishHistoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [wishes, setWishes] = useState<Wish[]>([]);
   const [loading, setLoading] = useState(true);
+  const roomHistory = useWishesStore((state) => state.roomHistory);
+  const setRoomHistory = useWishesStore((state) => state.setRoomHistory);
 
-  useEffect(() => {
-    loadHistory();
-  }, [id]);
+  const wishes = useMemo(() => {
+    if (!id) return EMPTY_WISHES;
+    return roomHistory[id] ?? EMPTY_WISHES;
+  }, [id, roomHistory]);
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const wishesData = await wishService.getRoomWishes(id, true);
-      setWishes(wishesData);
+      const wishesData = await wishService.getRoomWishesHistory(id);
+      setRoomHistory(id, wishesData);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">

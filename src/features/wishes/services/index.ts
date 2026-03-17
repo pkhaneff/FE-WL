@@ -1,98 +1,117 @@
-import { Wish, WishType } from '../../../types';
-import { useAppStore } from '../../../store';
+import { Wish, WishType, WishStatus } from '../../../types';
+import { api } from '../../../core/api';
 
-let mockWishes: Wish[] = [
-  {
-    id: 'w1',
-    roomId: 'r1',
-    creatorId: 'u1',
-    type: 'gift',
-    content: 'A new pair of sneakers',
-    status: 'active',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'w2',
-    roomId: 'r1',
-    creatorId: 'u2',
-    type: 'habit',
-    content: 'Drink more water',
-    status: 'confirmed',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  }
-];
+const mapBackendWish = (backendWish: any): Wish => {
+  return {
+    id: backendWish.id,
+    roomId: backendWish.room_id,
+    creatorId: backendWish.created_by,
+    type: backendWish.wish_type,
+    content: backendWish.title,
+    status: backendWish.status || 'pending', // Might need mapping from backend
+    createdAt: backendWish.created_at,
+    updatedAt: backendWish.updated_at,
+  };
+};
 
 export const wishService = {
-  getRoomWishes: async (roomId: string, showHistory = false): Promise<Wish[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let wishes = mockWishes.filter(w => w.roomId === roomId);
-        if (!showHistory) {
-          wishes = wishes.filter(w => w.status === 'active');
-        } else {
-          wishes = wishes.filter(w => w.status !== 'active');
-        }
-        resolve(wishes);
-      }, 500);
-    });
+  getRoomWishes: async (roomId: string): Promise<Wish[]> => {
+    try {
+      const response = await api.get(`/rooms/${roomId}/wishes`);
+      return response.data?.items?.map(mapBackendWish) || [];
+    } catch (error) {
+      console.error('Error fetching wishes:', error);
+      throw error;
+    }
+  },
+
+  getRoomPendingWishes: async (roomId: string): Promise<Wish[]> => {
+    try {
+      const response = await api.get(`/rooms/${roomId}/wishes`, {
+        params: { status: 'pending' }
+      });
+      return response.data?.items?.map(mapBackendWish) || [];
+    } catch (error) {
+      console.error('Error fetching pending wishes:', error);
+      throw error;
+    }
+  },
+
+  getRoomRequestedWishes: async (roomId: string): Promise<Wish[]> => {
+    try {
+      const response = await api.get(`/rooms/${roomId}/wishes`, {
+        params: { status: 'requested' }
+      });
+      return response.data?.items?.map(mapBackendWish) || [];
+    } catch (error) {
+      console.error('Error fetching requested wishes:', error);
+      throw error;
+    }
+  },
+
+  getRoomWishesHistory: async (roomId: string): Promise<Wish[]> => {
+    try {
+      const response = await api.get(`/rooms/${roomId}/wishes`, {
+        params: { status: 'confirmed,deleted' }
+      });
+      return response.data?.items?.map(mapBackendWish) || [];
+    } catch (error) {
+      console.error('Error fetching wish history:', error);
+      throw error;
+    }
   },
 
   createWish: async (roomId: string, type: WishType, content: string): Promise<Wish> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const user = useAppStore.getState().user;
-        const newWish: Wish = {
-          id: `w${Math.random().toString(36).substr(2, 9)}`,
-          roomId,
-          creatorId: user?.id || 'unknown',
-          type,
-          content,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        mockWishes.unshift(newWish);
-        resolve(newWish);
-      }, 500);
-    });
+    try {
+      const response = await api.post(`/rooms/${roomId}/wishes`, {
+        wish_type: type,
+        title: content,
+        description: ''
+      });
+      return mapBackendWish(response.data);
+    } catch (error) {
+      console.error('Error creating wish:', error);
+      throw error;
+    }
   },
 
-  updateWishStatus: async (wishId: string, status: 'confirmed' | 'deleted'): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const wish = mockWishes.find(w => w.id === wishId);
-        if (wish) {
-          wish.status = status;
-          wish.updatedAt = new Date().toISOString();
-        }
-        resolve();
-      }, 500);
-    });
+  updateWishStatus: async (roomId: string, wishId: string, status: WishStatus): Promise<void> => {
+    try {
+      if (status === 'requested') {
+        await api.post(`/rooms/${roomId}/wishes/${wishId}/request-confirmation`);
+      } else if (status === 'confirmed') {
+        await api.post(`/rooms/${roomId}/wishes/${wishId}/confirm`);
+      } else if (status === 'rejected') {
+        await api.post(`/rooms/${roomId}/wishes/${wishId}/reject`);
+      } else if (status === 'deleted') {
+        await api.delete(`/rooms/${roomId}/wishes/${wishId}`);
+      }
+    } catch (error) {
+      console.error('Error updating wish status:', error);
+      throw error;
+    }
   },
 
-  updateWishContent: async (wishId: string, type: WishType, content: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const wish = mockWishes.find(w => w.id === wishId);
-        if (wish) {
-          wish.type = type;
-          wish.content = content;
-          wish.updatedAt = new Date().toISOString();
-        }
-        resolve();
-      }, 500);
-    });
+  updateWishContent: async (roomId: string, wishId: string, type: WishType, content: string): Promise<void> => {
+    try {
+      await api.put(`/rooms/${roomId}/wishes/${wishId}`, {
+        wish_type: type,
+        title: content,
+        description: ''
+      });
+    } catch (error) {
+      console.error('Error updating wish content:', error);
+      throw error;
+    }
   },
 
-  getWishById: async (wishId: string): Promise<Wish> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const wish = mockWishes.find(w => w.id === wishId);
-        if (wish) resolve(wish);
-        else reject(new Error('Wish not found'));
-      }, 300);
-    });
+  getWishById: async (roomId: string, wishId: string): Promise<Wish> => {
+    try {
+      const response = await api.get(`/rooms/${roomId}/wishes/${wishId}`);
+      return mapBackendWish(response.data);
+    } catch (error) {
+      console.error('Error fetching wish:', error);
+      throw error;
+    }
   }
 };
